@@ -371,6 +371,7 @@ def parse_prompt_attention(text):
         elif text == '[':
             square_brackets.append(len(res))
         elif weight is not None and len(round_brackets) > 0:
+            weight = float(weight) if str(weight).replace('.', '', 1).isdigit() else 1.0
             multiply_range(round_brackets.pop(), float(weight))
         elif text == ')' and len(round_brackets) > 0:
             multiply_range(round_brackets.pop(), round_bracket_multiplier)
