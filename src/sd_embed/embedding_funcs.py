@@ -441,7 +441,10 @@ def get_weighted_text_embeddings_sdxl(
         ).images[0]
     """
     import math
-    eos = pipe.tokenizer.eos_token_id 
+    eos1 = pipe.tokenizer.eos_token_id
+    eos2 = pipe.tokenizer_2.eos_token_id
+    pad1 = pipe.tokenizer.pad_token_id
+    pad2 = pipe.tokenizer_2.pad_token_id
     dynamically_scale_lora_layers(pipe, lora_scale = lora_scale)
     
     # tokenizer 1
@@ -470,7 +473,7 @@ def get_weighted_text_embeddings_sdxl(
         # padding the neg_prompt with eos token
         neg_prompt_tokens   = (
             neg_prompt_tokens  + 
-            [eos] * abs(prompt_token_len - neg_prompt_token_len)
+            [eos1] * abs(prompt_token_len - neg_prompt_token_len)
         )
         neg_prompt_weights  = (
             neg_prompt_weights + 
@@ -480,7 +483,7 @@ def get_weighted_text_embeddings_sdxl(
         # padding the prompt
         prompt_tokens       = (
             prompt_tokens  
-            + [eos] * abs(prompt_token_len - neg_prompt_token_len)
+            + [eos2] * abs(prompt_token_len - neg_prompt_token_len)
         )
         prompt_weights      = (
             prompt_weights 
@@ -495,7 +498,7 @@ def get_weighted_text_embeddings_sdxl(
         # padding the neg_prompt with eos token
         neg_prompt_tokens_2   = (
             neg_prompt_tokens_2  + 
-            [eos] * abs(prompt_token_len_2 - neg_prompt_token_len_2)
+            [eos2] * abs(prompt_token_len_2 - neg_prompt_token_len_2)
         )
         neg_prompt_weights_2  = (
             neg_prompt_weights_2 + 
@@ -505,7 +508,7 @@ def get_weighted_text_embeddings_sdxl(
         # padding the prompt
         prompt_tokens_2       = (
             prompt_tokens_2  
-            + [eos] * abs(prompt_token_len_2 - neg_prompt_token_len_2)
+            + [eos2] * abs(prompt_token_len_2 - neg_prompt_token_len_2)
         )
         prompt_weights_2      = (
             prompt_weights_2 
@@ -556,6 +559,9 @@ def get_weighted_text_embeddings_sdxl(
             [prompt_token_groups_2[i]]
             ,dtype = torch.long, device = pipe.device
         )
+
+        token_tensor[:, prompt_token_groups[i].index(eos1)+1:] = pad1
+        token_tensor_2[:, prompt_token_groups_2[i].index(eos2)+1:] = pad2
         
         # use first text encoder
         prompt_embeds_1 = pipe.text_encoder(
@@ -615,7 +621,10 @@ def get_weighted_text_embeddings_sdxl(
             , dtype     = torch.float16
             , device    = pipe.device
         )
-        
+
+        neg_token_tensor[:, neg_prompt_token_groups[i].index(eos1)+1:] = pad1
+        neg_token_tensor_2[:, neg_prompt_token_groups_2[i].index(eos2)+1:] = pad2
+
         # use first text encoder
         neg_prompt_embeds_1 = pipe.text_encoder(
             neg_token_tensor.to(pipe.device)
