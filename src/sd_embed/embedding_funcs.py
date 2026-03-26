@@ -483,7 +483,7 @@ def get_weighted_text_embeddings_sdxl(
         # padding the prompt
         prompt_tokens       = (
             prompt_tokens  
-            + [eos2] * abs(prompt_token_len - neg_prompt_token_len)
+            + [eos1] * abs(prompt_token_len - neg_prompt_token_len)
         )
         prompt_weights      = (
             prompt_weights 
